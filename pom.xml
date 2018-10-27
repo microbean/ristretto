@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>org.microbean</groupId>
+  <artifactId>microbean-ristretto-parent</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <packaging>pom</packaging>
+
+  <parent>
+    <groupId>org.microbean</groupId>
+    <artifactId>microbean-pluginmanagement-pom</artifactId>
+    <version>7-SNAPSHOT</version>
+  </parent>
+
+  <name>microBean Ristretto Parent</name>
+  <description>A modular implementation of CDI.</description>
+  <inceptionYear>2018</inceptionYear>
+  <url>https://microbean.github.io/ristretto</url>
+
+  <scm>
+    <connection>scm:git:git@github.com:microbean/ristretto.git</connection>
+    <developerConnection>scm:git:git@github.com:microbean/ristretto.git</developerConnection>
+    <url>https://github.com/microbean/ristretto/</url>
+    <tag>HEAD</tag>
+  </scm>
+
+  <issueManagement>
+    <system>Github</system>
+    <url>https://github.com/microbean/ristretto/issues/</url>
+  </issueManagement>
+
+  <modules>
+    <module>microbean-ristretto-javax-decorator</module>
+    <module>microbean-ristretto-javax-el</module>
+    <module>microbean-ristretto-javax-enterprise-context-spi</module>
+    <module>microbean-ristretto-javax-enterprise-context</module>
+    <module>microbean-ristretto-javax-enterprise-event</module>
+    <module>microbean-ristretto-javax-enterprise-inject-literal</module>
+    <module>microbean-ristretto-javax-enterprise-inject-se</module>
+    <module>microbean-ristretto-javax-enterprise-inject-spi</module>
+    <module>microbean-ristretto-javax-enterprise-inject</module>
+    <module>microbean-ristretto-javax-enterprise-util</module>
+    <module>microbean-ristretto-javax-inject</module>
+    <module>microbean-ristretto-javax-interceptor</module>
+  </modules>
+
+  <dependencyManagement>
+    <dependencies>
+
+      <!-- Imports. -->
+
+      <!-- Normal dependencies. -->
+      
+      <dependency>
+        <groupId>net.jcip</groupId>
+        <artifactId>jcip-annotations</artifactId>
+        <version>1.0</version>
+        <type>jar</type>
+      </dependency>
+
+      <dependency>
+        <groupId>org.microbean</groupId>
+        <artifactId>microbean-development-annotations</artifactId>
+        <version>0.2.1</version>
+        <type>jar</type>
+      </dependency>
+      
+    </dependencies>
+  </dependencyManagement>
+
+  <dependencies>
+
+    <!-- Test-scoped dependencies. -->
+
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <type>jar</type>
+      <scope>test</scope>
+    </dependency>
+    
+  </dependencies>
+  
+  <build>
+
+    <resources>
+
+      <resource>
+        <directory>src/main/resources</directory>
+      </resource>
+      
+      <resource>
+        <targetPath>META-INF</targetPath>
+        <directory>${project.basedir}</directory>
+        <includes>
+          <include>LICENSE</include>
+        </includes>
+      </resource>
+
+    </resources>
+
+    <testResources />
+    
+    <pluginManagement>
+      <plugins>
+
+        <plugin>
+          <groupId>com.github.spotbugs</groupId>
+          <artifactId>spotbugs-maven-plugin</artifactId>
+          <version>3.1.7</version>
+        </plugin>
+
+        <plugin>
+          <artifactId>maven-javadoc-plugin</artifactId>
+          <version>3.0.1</version>
+        </plugin>
+
+      </plugins>
+    </pluginManagement>
+    
+    <plugins>
+
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <systemPropertyVariables>
+            <project.build.directory>${project.build.directory}</project.build.directory>
+          </systemPropertyVariables>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>com.github.github</groupId>
+        <artifactId>site-maven-plugin</artifactId>
+      </plugin>
+
+    </plugins>
+  </build>
+
+  <properties>
+
+    <!-- spotbugs-maven-plugin properties; see https://spotbugs.github.io/spotbugs-maven-plugin/spotbugs-mojo.html -->
+    <spotbugs.effort>Max</spotbugs.effort>
+    <spotbugs.excludeFilterFile>src/spotbugs/exclude.xml</spotbugs.excludeFilterFile>
+    <spotbugs.threshold>Medium</spotbugs.threshold>
+
+    <!-- maven-compiler-plugin properties -->
+    <maven.compiler.release>11</maven.compiler.release>
+    <maven.compiler.source>11</maven.compiler.source>
+    <maven.compiler.target>11</maven.compiler.target>
+
+    <!-- maven-javadoc-plugin properties; see https://maven.apache.org/plugins/maven-javadoc-plugin/javadoc-mojo.html -->
+    <doctitle>&lt;a href="${project.url}" target="_parent"&gt;&lt;span style="font-family:Lobster, cursive;"&gt;µb&lt;/span&gt; ristretto&lt;/a&gt; ${project.version} &lt;a href="https://travis-ci.org/microbean/ristretto" target="_parent"&gt;&lt;img src="https://travis-ci.org/microbean/ristretto.svg?branch=master"&gt;&lt;/a&gt;</doctitle>
+    <links></links>
+    <stylesheetfile>css/stylesheet.css</stylesheetfile>
+
+  </properties>
+
+  <reporting>
+    <plugins>
+      <plugin>
+        <artifactId>maven-javadoc-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>com.github.spotbugs</groupId>
+        <artifactId>spotbugs-maven-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </reporting>
+
+</project>
