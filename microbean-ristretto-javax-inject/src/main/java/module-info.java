@@ -1,3 +1,3 @@
-module javax.inject {
+module org.microbean.ristretto.javax.inject {
   exports javax.inject;
 }

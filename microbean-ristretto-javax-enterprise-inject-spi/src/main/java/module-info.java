@@ -1,11 +1,11 @@
-module javax.enterprise.inject.spi {
+module org.microbean.ristretto.javax.enterprise.inject.spi {
   exports javax.enterprise.inject.spi;
   exports javax.enterprise.inject.spi.configurator;
 
-  requires transitive javax.enterprise.context.spi;
-  requires transitive javax.enterprise.event;
-  requires transitive javax.enterprise.inject;
-  requires transitive javax.interceptor;
+  requires transitive org.microbean.ristretto.javax.enterprise.context.spi;
+  requires transitive org.microbean.ristretto.javax.enterprise.event;
+  requires transitive org.microbean.ristretto.javax.enterprise.inject;
+  requires transitive org.microbean.ristretto.javax.interceptor;
 
-  requires transitive static javax.el;
+  requires transitive static org.microbean.ristretto.javax.el;
 }

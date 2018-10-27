@@ -1,8 +1,6 @@
-module javax.enterprise.context {
-
+module org.microbean.ristretto.javax.enterprise.context {
   exports javax.enterprise.context;
 
-  requires transitive javax.enterprise.util;
-  requires transitive javax.inject;
-  
+  requires transitive org.microbean.ristretto.javax.enterprise.util;
+  requires transitive org.microbean.ristretto.javax.inject;
 }

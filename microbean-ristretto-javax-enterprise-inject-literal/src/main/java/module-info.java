@@ -1,5 +1,5 @@
-module javax.enterprise.inject.literal {
+module org.microbean.ristretto.javax.enterprise.inject.literal {
   exports javax.enterprise.inject.literal;
-  requires transitive javax.enterprise.util;
-  requires transitive javax.inject;  
+  requires transitive org.microbean.ristretto.javax.enterprise.util;
+  requires transitive org.microbean.ristretto.javax.inject;  
 }

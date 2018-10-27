@@ -1,5 +1,5 @@
-module javax.enterprise.event {
+module org.microbean.ristretto.javax.enterprise.event {
   exports javax.enterprise.event;
 
-  requires transitive javax.enterprise.util; // for TypeLiteral
+  requires transitive org.microbean.ristretto.javax.enterprise.util; // for TypeLiteral
 }

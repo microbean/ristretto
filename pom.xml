@@ -34,6 +34,8 @@
   </issueManagement>
 
   <modules>
+
+    <!-- Modular implementation of the CDI 2.0 specification. -->
     <module>microbean-ristretto-javax-decorator</module>
     <module>microbean-ristretto-javax-el</module>
     <module>microbean-ristretto-javax-enterprise-context-spi</module>
