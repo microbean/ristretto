@@ -48,6 +48,10 @@
     <module>microbean-ristretto-javax-enterprise-util</module>
     <module>microbean-ristretto-javax-inject</module>
     <module>microbean-ristretto-javax-interceptor</module>
+
+    <!-- Implementations. -->
+    <module>microbean-ristretto-context</module>
+    
   </modules>
 
   <dependencyManagement>
