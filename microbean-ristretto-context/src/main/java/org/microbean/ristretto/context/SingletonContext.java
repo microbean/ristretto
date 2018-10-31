@@ -16,26 +16,12 @@
  */
 package org.microbean.ristretto.context;
 
-import java.util.function.Consumer;
-import java.util.function.Function;
+import javax.inject.Singleton;
 
-import javax.enterprise.context.spi.Contextual;
+final class SingletonContext extends AbstractContext {
 
-public interface Storage extends Destroyable {
-  
-  void forEach(final Consumer<? super ContextualInstance<?>> consumer);
-
-  <T> ContextualInstance<T> get(final Contextual<T> key);
-
-  <T> ContextualInstance<T> computeIfAbsent(final Contextual<T> key, final Function<? super Contextual<T>, ? extends ContextualInstance<T>> mappingFunction);
-
-  <T> ContextualInstance<T> remove(final Contextual<T> key);
-
-  default void destroy(final Contextual<?> key) {
-    final ContextualInstance<?> contextualInstance = this.remove(key);
-    if (contextualInstance != null) {
-      contextualInstance.destroy();
-    }
+  SingletonContext() {
+    super(Singleton.class);
   }
-  
+
 }

@@ -18,6 +18,8 @@ package org.microbean.ristretto.context;
 
 public interface Destroyable {
 
+  boolean isDestroyed();
+  
   boolean destroy();
   
 }

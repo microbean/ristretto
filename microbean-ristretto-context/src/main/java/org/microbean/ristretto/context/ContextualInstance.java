@@ -52,6 +52,11 @@ public final class ContextualInstance<T> implements Destroyable, Supplier<T> {
   }
 
   @Override
+  public final boolean isDestroyed() {
+    return this.destroyed.get();
+  }
+
+  @Override
   public final boolean destroy() {
     final boolean returnValue;
     if (this.destroyed.compareAndSet(false, true)) {

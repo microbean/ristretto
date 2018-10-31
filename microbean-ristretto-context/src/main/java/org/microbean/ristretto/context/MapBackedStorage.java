@@ -19,34 +19,72 @@ package org.microbean.ristretto.context;
 import java.util.Map;
 import java.util.Objects;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import javax.enterprise.context.spi.Contextual;
 
 public class MapBackedStorage implements Storage {
 
+  private final AtomicBoolean destroyed;
+  
   private final Map<Contextual<?>, ContextualInstance<?>> map;
   
   public MapBackedStorage(final Map<Contextual<?>, ContextualInstance<?>> map) {
     super();
+    this.destroyed = new AtomicBoolean();
     this.map = Objects.requireNonNull(map);
+  }
+
+  @Override
+  public boolean destroy() {
+    if (this.destroyed.getAndSet(true)) {
+      throw new IllegalStateException();
+    }
+    this.map.forEach((k, v) -> v.destroy());
+    this.map.clear();
+    return true;
+  }
+
+  @Override
+  public boolean isDestroyed() {
+    return this.destroyed.get();
+  }
+
+  @Override
+  public void forEach(final Consumer<? super ContextualInstance<?>> consumer) {
+    if (this.destroyed.get()) {
+      throw new IllegalStateException();
+    }
+    this.map.forEach((k, v) -> consumer.accept(v));
   }
 
   @Override
   @SuppressWarnings("unchecked")
   public <T> ContextualInstance<T> get(final Contextual<T> key) {
+    if (this.destroyed.get()) {
+      throw new IllegalStateException();
+    }
     return (ContextualInstance<T>)this.map.get(key);
   }
 
   @Override
   @SuppressWarnings("unchecked")
   public <T> ContextualInstance<T> computeIfAbsent(final Contextual<T> key, final Function<? super Contextual<T>, ? extends ContextualInstance<T>> mappingFunction) {
+    if (this.destroyed.get()) {
+      throw new IllegalStateException();
+    }
     return (ContextualInstance<T>)this.map.computeIfAbsent(key, (Function<? super Contextual<?>, ? extends ContextualInstance<?>>)mappingFunction);
   }
 
   @Override
   @SuppressWarnings("unchecked")
   public <T> ContextualInstance<T> remove(final Contextual<T> key) {
+    if (this.destroyed.get()) {
+      throw new IllegalStateException();
+    }
     return (ContextualInstance<T>)this.map.remove(key);
   }
   

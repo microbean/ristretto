@@ -26,7 +26,7 @@ import javax.enterprise.context.spi.CreationalContext;
 final class DependentContext extends AbstractContext {
 
   DependentContext() {
-    super(Dependent.class, null);
+    super(Dependent.class, null /* no Storage */);
   }
 
   @Override
@@ -40,9 +40,4 @@ final class DependentContext extends AbstractContext {
     return returnValue;
   }
 
-  @Override
-  public final boolean isActive() {
-    return true;
-  }
-  
 }
