@@ -16,16 +16,17 @@
  */
 package org.microbean.ristretto.context;
 
-import java.util.Collection;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
-import java.util.function.Predicate;
+import javax.enterprise.context.spi.Contextual;
 
-import javax.enterprise.context.spi.CreationalContext;
+interface Storage {
 
-interface DependentInstanceCollection<T> {
+  <T> ContextualInstance<T> get(final Contextual<T> key);
 
-  void addDependentInstance(final ContextualInstance<? extends T> dependentInstance);
+  <T> ContextualInstance<T> computeIfAbsent(final Contextual<T> key, final Function<? super Contextual<T>, ? extends ContextualInstance<T>> mappingFunction);
 
-  void forEachDependentInstance(final Predicate<? super ContextualInstance<? extends T>> predicate);
+  <T> ContextualInstance<T> remove(final Contextual<T> key);
   
 }

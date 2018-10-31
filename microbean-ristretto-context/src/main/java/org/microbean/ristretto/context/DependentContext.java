@@ -16,60 +16,33 @@
  */
 package org.microbean.ristretto.context;
 
-import java.lang.annotation.Annotation;
-
 import java.util.Objects;
 
-import javax.enterprise.context.ContextNotActiveException;
 import javax.enterprise.context.Dependent;
 
-import javax.enterprise.context.spi.AlterableContext;
 import javax.enterprise.context.spi.Contextual;
 import javax.enterprise.context.spi.CreationalContext;
 
-final class DependentContext implements AlterableContext {
+final class DependentContext extends AbstractContext {
 
   DependentContext() {
-    super();
+    super(Dependent.class, null);
   }
 
   @Override
-  public final <T> T get(final Contextual<T> contextual) {
-    return get(contextual, null);
-  }
-  
-  @Override
   public final <T> T get(final Contextual<T> contextual, final CreationalContext<T> creationalContext) {
-    Objects.requireNonNull(contextual);
-    final T returnValue;
-    if (!this.isActive()) {
-      throw new ContextNotActiveException();
-    } else if (creationalContext == null) {
-      returnValue = null;
-    } else {
-      returnValue = contextual.create(creationalContext);
-      if (returnValue != null && creationalContext instanceof DependentInstanceCollection) {
-        @SuppressWarnings("unchecked")
-        final DependentInstanceCollection<T> dependentInstanceCollection = (DependentInstanceCollection<T>)creationalContext;
-        dependentInstanceCollection.addDependentInstance(returnValue);
-      }
+    final T returnValue = super.get(contextual, creationalContext);
+    if (returnValue != null && creationalContext instanceof DependentInstanceCollection) {
+      @SuppressWarnings("unchecked")
+      final DependentInstanceCollection<T> dependentInstanceCollection = (DependentInstanceCollection<T>)creationalContext;
+      dependentInstanceCollection.addDependentInstance(new ContextualInstance<>(contextual, returnValue, creationalContext));
     }
     return returnValue;
   }
 
   @Override
-  public final void destroy(final Contextual<?> contextual) {
-    // Nothing to do
-  }
-
-  @Override
   public final boolean isActive() {
     return true;
-  }
-
-  @Override
-  public final Class<? extends Annotation> getScope() {
-    return Dependent.class;
   }
   
 }

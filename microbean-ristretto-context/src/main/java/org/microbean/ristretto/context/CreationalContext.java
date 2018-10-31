@@ -26,13 +26,13 @@ import java.util.function.Predicate;
 
 import javax.enterprise.context.spi.Contextual;
 
-class CreationalContext<T> implements DependentInstanceCollection<T> {
+class CreationalContext<T> implements javax.enterprise.context.spi.CreationalContext<T>, DependentInstanceCollection<T> {
 
-  private final Deque<T> incompleteInstances;
+  private final Deque<ContextualInstance<T>> incompleteInstances;
   
   private final Contextual<T> contextual;
 
-  private final Collection<T> dependentInstances;
+  private final Collection<ContextualInstance<? extends T>> dependentInstances;
 
   CreationalContext(final Contextual<T> contextual) {
     super();
@@ -43,17 +43,17 @@ class CreationalContext<T> implements DependentInstanceCollection<T> {
 
   @Override
   public void push(final T incompleteInstance) {
-    if (incompleteInstance != null) {
+    if (incompleteInstance != null) {      
       synchronized (this.incompleteInstances) {
-        this.incompleteInstances.addFirst(incompleteInstance);
+        this.incompleteInstances.addFirst(new ContextualInstance<>(this.contextual, incompleteInstance, this));
       }
     }
   }
 
   @Override
   public void release() {
-    this.forEachDependentInstance(t -> {
-        this.contextual.destroy(t, this);
+    this.forEachDependentInstance(contextualInstance -> {
+        contextualInstance.destroy();
         return true; // yes, remove the reference
       });
   }
@@ -65,20 +65,20 @@ class CreationalContext<T> implements DependentInstanceCollection<T> {
   
 
   @Override
-  public void addDependentInstance(final T dependentInstance) {
+  public void addDependentInstance(final ContextualInstance<? extends T> dependentInstance) {
     synchronized (this.dependentInstances) {
       this.dependentInstances.add(dependentInstance);
     }
   }
 
   @Override
-  public void forEachDependentInstance(final Predicate<? super T> function) {
+  public void forEachDependentInstance(final Predicate<? super ContextualInstance<? extends T>> function) {
     if (function != null) {
       synchronized (this.dependentInstances) {
-        final Iterator<? extends T> iterator = this.dependentInstances.iterator();
+        final Iterator<? extends ContextualInstance<? extends T>> iterator = this.dependentInstances.iterator();
         while (iterator.hasNext()) {
-          final T instance = iterator.next();
-          if (function.test(instance)) {
+          final ContextualInstance<? extends T> contextualInstance = iterator.next();
+          if (function.test(contextualInstance)) {
             iterator.remove();
           }
         }

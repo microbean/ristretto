@@ -16,16 +16,8 @@
  */
 package org.microbean.ristretto.context;
 
-import java.util.Collection;
+public interface Destroyable {
 
-import java.util.function.Predicate;
-
-import javax.enterprise.context.spi.CreationalContext;
-
-interface DependentInstanceCollection<T> {
-
-  void addDependentInstance(final ContextualInstance<? extends T> dependentInstance);
-
-  void forEachDependentInstance(final Predicate<? super ContextualInstance<? extends T>> predicate);
+  boolean destroy();
   
 }
