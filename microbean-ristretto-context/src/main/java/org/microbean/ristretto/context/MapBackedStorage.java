@@ -26,7 +26,7 @@ import java.util.function.Function;
 
 import javax.enterprise.context.spi.Contextual;
 
-public class MapBackedStorage implements Storage {
+public final class MapBackedStorage implements Storage {
 
   private final AtomicBoolean destroyed;
   
@@ -39,7 +39,7 @@ public class MapBackedStorage implements Storage {
   }
 
   @Override
-  public boolean destroy() {
+  public final boolean destroy() {
     if (this.destroyed.getAndSet(true)) {
       throw new IllegalStateException();
     }
@@ -49,13 +49,13 @@ public class MapBackedStorage implements Storage {
   }
 
   @Override
-  public boolean isDestroyed() {
+  public final boolean isDestroyed() {
     return this.destroyed.get();
   }
 
   @Override
-  public void forEach(final Consumer<? super ContextualInstance<?>> consumer) {
-    if (this.destroyed.get()) {
+  public final void forEach(final Consumer<? super ContextualInstance<?>> consumer) {
+    if (this.isDestroyed()) {
       throw new IllegalStateException();
     }
     this.map.forEach((k, v) -> consumer.accept(v));
@@ -63,8 +63,8 @@ public class MapBackedStorage implements Storage {
 
   @Override
   @SuppressWarnings("unchecked")
-  public <T> ContextualInstance<T> get(final Contextual<T> key) {
-    if (this.destroyed.get()) {
+  public final <T> ContextualInstance<T> get(final Contextual<T> key) {
+    if (this.isDestroyed()) {
       throw new IllegalStateException();
     }
     return (ContextualInstance<T>)this.map.get(key);
@@ -72,8 +72,8 @@ public class MapBackedStorage implements Storage {
 
   @Override
   @SuppressWarnings("unchecked")
-  public <T> ContextualInstance<T> computeIfAbsent(final Contextual<T> key, final Function<? super Contextual<T>, ? extends ContextualInstance<T>> mappingFunction) {
-    if (this.destroyed.get()) {
+  public final <T> ContextualInstance<T> computeIfAbsent(final Contextual<T> key, final Function<? super Contextual<T>, ? extends ContextualInstance<T>> mappingFunction) {
+    if (this.isDestroyed()) {
       throw new IllegalStateException();
     }
     return (ContextualInstance<T>)this.map.computeIfAbsent(key, (Function<? super Contextual<?>, ? extends ContextualInstance<?>>)mappingFunction);
@@ -81,8 +81,8 @@ public class MapBackedStorage implements Storage {
 
   @Override
   @SuppressWarnings("unchecked")
-  public <T> ContextualInstance<T> remove(final Contextual<T> key) {
-    if (this.destroyed.get()) {
+  public final <T> ContextualInstance<T> remove(final Contextual<T> key) {
+    if (this.isDestroyed()) {
       throw new IllegalStateException();
     }
     return (ContextualInstance<T>)this.map.remove(key);

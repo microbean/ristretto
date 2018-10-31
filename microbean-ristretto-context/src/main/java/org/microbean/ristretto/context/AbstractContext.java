@@ -32,21 +32,28 @@ import javax.enterprise.context.spi.AlterableContext;
 import javax.enterprise.context.spi.Contextual;
 import javax.enterprise.context.spi.CreationalContext;
 
-abstract class AbstractContext implements AlterableContext {
+class AbstractContext implements AlterableContext, Destroyable {
 
   private final AtomicBoolean active;
+
+  private final AtomicBoolean destroyed;
   
   private final Class<? extends Annotation> scope;
 
   private final Storage storage;
 
   AbstractContext(final Class<? extends Annotation> scope) {
-    this(scope, new MapBackedStorage(new ConcurrentHashMap<>()));
+    this(scope, true, new MapBackedStorage(new ConcurrentHashMap<>()));
+  }
+
+  AbstractContext(final Class<? extends Annotation> scope, final Storage storage) {
+    this(scope, true, storage);
   }
   
-  AbstractContext(final Class<? extends Annotation> scope, final Storage storage) {
+  AbstractContext(final Class<? extends Annotation> scope, final boolean active, final Storage storage) {
     super();
-    this.active = new AtomicBoolean(true);
+    this.active = new AtomicBoolean(active);
+    this.destroyed = new AtomicBoolean(false);
     this.scope = Objects.requireNonNull(scope);
     this.storage = storage;
   }
@@ -85,7 +92,7 @@ abstract class AbstractContext implements AlterableContext {
   }
 
   @Override
-  public void destroy(final Contextual<?> contextual) {
+  public final void destroy(final Contextual<?> contextual) {
     if (!this.isActive()) {
       throw new ContextNotActiveException();
     }
@@ -98,21 +105,33 @@ abstract class AbstractContext implements AlterableContext {
   }
 
   @Override
-  public boolean isActive() {
+  public final boolean isActive() {
     return this.active.get();
   }
 
-  protected void setActive(final boolean active) {
+  protected final void setActive(final boolean active) {
+    if (active && this.isDestroyed()) {
+      throw new IllegalStateException();
+    }
     this.active.set(active);
-  }    
-
-  public void destroy() {
-    
   }
-  
+
   @Override
   public final Class<? extends Annotation> getScope() {
     return this.scope;
+  }
+  
+  @Override
+  public final boolean isDestroyed() {
+    return this.destroyed.get();
+  }
+  
+  @Override
+  public final boolean destroy() {
+    this.setActive(false);
+    this.destroyed.set(true);
+    final boolean returnValue = this.storage == null ? true : this.storage.destroy();
+    return returnValue;
   }
   
 }

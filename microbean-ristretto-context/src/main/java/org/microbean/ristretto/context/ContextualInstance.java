@@ -29,12 +29,12 @@ public final class ContextualInstance<T> implements Destroyable, Supplier<T> {
 
   private final AtomicBoolean destroyed;
   
-  private final T instance;
+  private Contextual<T> contextual;
 
-  private final Contextual<T> contextual;
+  private CreationalContext<T> creationalContext;
 
-  private final CreationalContext<T> creationalContext;
-  
+  private T instance;
+
   public ContextualInstance(final Contextual<T> contextual, final T instance, final CreationalContext<T> creationalContext) {
     super();
     this.destroyed = new AtomicBoolean();
@@ -61,6 +61,9 @@ public final class ContextualInstance<T> implements Destroyable, Supplier<T> {
     final boolean returnValue;
     if (this.destroyed.compareAndSet(false, true)) {
       this.contextual.destroy(this.instance, this.creationalContext);
+      this.instance = null;
+      this.creationalContext = null;
+      this.contextual = null;      
       returnValue = true;
     } else {
       returnValue = false;

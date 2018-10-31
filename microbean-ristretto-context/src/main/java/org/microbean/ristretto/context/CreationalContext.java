@@ -52,10 +52,7 @@ class CreationalContext<T> implements javax.enterprise.context.spi.CreationalCon
 
   @Override
   public void release() {
-    this.forEachDependentInstance(contextualInstance -> {
-        contextualInstance.destroy();
-        return true; // yes, remove the reference
-      });
+    this.forEachDependentInstance(contextualInstance -> contextualInstance.destroy());
   }
 
 
@@ -77,8 +74,7 @@ class CreationalContext<T> implements javax.enterprise.context.spi.CreationalCon
       synchronized (this.dependentInstances) {
         final Iterator<? extends ContextualInstance<? extends T>> iterator = this.dependentInstances.iterator();
         while (iterator.hasNext()) {
-          final ContextualInstance<? extends T> contextualInstance = iterator.next();
-          if (function.test(contextualInstance)) {
+          if (function.test(iterator.next())) {
             iterator.remove();
           }
         }
