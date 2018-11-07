@@ -50,6 +50,7 @@
     <module>microbean-ristretto-javax-interceptor</module>
 
     <!-- Implementations. -->
+    <module>microbean-ristretto-bean</module>
     <module>microbean-ristretto-context</module>
     
   </modules>

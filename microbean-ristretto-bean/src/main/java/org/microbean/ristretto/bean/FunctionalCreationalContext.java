@@ -14,18 +14,34 @@
  * implied.  See the License for the specific language governing
  * permissions and limitations under the License.
  */
-package org.microbean.ristretto.context;
+package org.microbean.ristretto.bean;
 
-import java.util.Collection;
+import java.util.Objects;
 
-import java.util.function.Predicate;
+import java.util.function.Consumer;
 
 import javax.enterprise.context.spi.CreationalContext;
 
-interface DependentInstanceCollection<T> {
+class FunctionalCreationalContext<T> implements CreationalContext<T> {
 
-  void addDependentInstance(final ContextualInstance<? extends T> dependentInstance);
+  private final Consumer<T> pushConsumer;
 
-  void removeDependentInstanceIf(final Predicate<? super ContextualInstance<? extends T>> predicate);
+  private final Runnable releaseRunnable;
+  
+  FunctionalCreationalContext(final Consumer<T> pushConsumer,
+                              final Runnable releaseRunnable) {
+    this.pushConsumer = Objects.requireNonNull(pushConsumer);
+    this.releaseRunnable = Objects.requireNonNull(releaseRunnable);
+  }
+
+  @Override
+  public void push(final T incompleteInstance) {
+    this.pushConsumer.accept(incompleteInstance);
+  }
+
+  @Override
+  public void release() {
+    this.releaseRunnable.run();
+  }
   
 }

@@ -16,16 +16,17 @@
  */
 package org.microbean.ristretto.context;
 
-import java.util.Collection;
+import javax.enterprise.context.spi.Contextual;
 
-import java.util.function.Predicate;
+final class ContextualInstances {
 
-import javax.enterprise.context.spi.CreationalContext;
+  private ContextualInstances() {
+    super();
+  }
 
-interface DependentInstanceCollection<T> {
-
-  void addDependentInstance(final ContextualInstance<? extends T> dependentInstance);
-
-  void removeDependentInstanceIf(final Predicate<? super ContextualInstance<? extends T>> predicate);
+  // See http://docs.jboss.org/cdi/spec/2.0/cdi-spec.html#contextual_instance
+  public static final <T> ContextualInstance<T> getContextualInstance(final Contextual<T> contextual) {
+    return null;
+  }
   
 }

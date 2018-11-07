@@ -84,7 +84,9 @@ class AbstractContext implements AlterableContext, Destroyable {
     } else if (this.storage == null) {
       returnValue = contextual.create(creationalContext);
     } else {
-      final Supplier<T> contextualInstance = this.storage.computeIfAbsent(contextual, c -> new ContextualInstance<T>(c, c.create(creationalContext), creationalContext));
+      final Supplier<T> contextualInstance =
+        this.storage.computeIfAbsent(contextual,
+                                     c -> new ContextualInstance<T>(c.create(creationalContext), c::destroy, creationalContext, this::isActive, Contexts.isNormalScope(this.getScope())));
       assert contextualInstance != null;
       returnValue = contextualInstance.get();
     }

@@ -14,18 +14,27 @@
  * implied.  See the License for the specific language governing
  * permissions and limitations under the License.
  */
-package org.microbean.ristretto.context;
+package org.microbean.ristretto.bean;
 
-import java.util.Collection;
+import java.lang.reflect.Type;
 
-import java.util.function.Predicate;
+import java.util.Set;
 
-import javax.enterprise.context.spi.CreationalContext;
+import java.util.function.BiFunction;
+import java.util.function.Supplier;
 
-interface DependentInstanceCollection<T> {
+@FunctionalInterface
+public interface ClientProxy<T> {
 
-  void addDependentInstance(final ContextualInstance<? extends T> dependentInstance);
+  T $get();
 
-  void removeDependentInstanceIf(final Predicate<? super ContextualInstance<? extends T>> predicate);
+  @FunctionalInterface
+  public static interface Factory<T> extends BiFunction<Supplier<T>, Set<? extends Type>, T> {
+    // Section 5.4: "A client proxy implements/extends some or all of
+    // the bean types of the bean"
+    //
+    // 
+
+  }
   
 }

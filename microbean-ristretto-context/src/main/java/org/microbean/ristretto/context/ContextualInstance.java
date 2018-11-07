@@ -20,7 +20,11 @@ import java.util.Objects;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import java.util.function.BiConsumer;
+import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
+
+import javax.enterprise.context.ContextNotActiveException;
 
 import javax.enterprise.context.spi.Contextual;
 import javax.enterprise.context.spi.CreationalContext;
@@ -29,41 +33,83 @@ public final class ContextualInstance<T> implements Destroyable, Supplier<T> {
 
   private final AtomicBoolean destroyed;
   
-  private Contextual<T> contextual;
-
-  private CreationalContext<T> creationalContext;
+  private BiConsumer<T, CreationalContext<T>> destroyer;
 
   private T instance;
 
-  public ContextualInstance(final Contextual<T> contextual, final T instance, final CreationalContext<T> creationalContext) {
+  private final BooleanSupplier activeSupplier;
+  
+  private CreationalContext<T> creationalContext;
+
+  private final boolean normal;
+
+  ContextualInstance(final T instance,
+                     final boolean normal) {
+    this(instance, null, null, () -> true, normal);
+  }
+  
+  ContextualInstance(final T instance,
+                     final boolean active,
+                     final boolean normal) {
+    this(instance, null, null, () -> active, normal);
+  }
+  
+  ContextualInstance(final T instance,
+                     final BooleanSupplier activeSupplier,
+                     final boolean normal) {
+    this(instance, null, null, activeSupplier, normal);
+  }
+  
+  ContextualInstance(final T instance,
+                     final BiConsumer<T, CreationalContext<T>> destroyer,
+                     final CreationalContext<T> creationalContext,
+                     final BooleanSupplier activeSupplier,
+                     final boolean normal) {
     super();
     this.destroyed = new AtomicBoolean();
-    this.contextual = Objects.requireNonNull(contextual);
-    this.creationalContext = creationalContext;
     this.instance = instance;
+    this.destroyer = destroyer;
+    this.creationalContext = Objects.requireNonNull(creationalContext);
+    this.activeSupplier = activeSupplier == null ? () -> true : activeSupplier;
+    this.normal = normal;
   }
 
   @Override
   public final T get() {
-    if (this.destroyed.get()) {
+    if (this.isDestroyed()) {
       throw new IllegalStateException();
+    } else if (!this.isActive()) {
+      throw new ContextNotActiveException();
     }
     return this.instance;
   }
 
+  public final boolean isActive() {
+    return !this.isDestroyed() && this.activeSupplier.getAsBoolean();
+  }
+  
   @Override
   public final boolean isDestroyed() {
     return this.destroyed.get();
   }
 
+  public final boolean isNormal() {
+    if (this.isDestroyed()) {
+      throw new IllegalStateException();
+    }
+    return this.normal;
+  }
+  
   @Override
   public final boolean destroy() {
     final boolean returnValue;
     if (this.destroyed.compareAndSet(false, true)) {
-      this.contextual.destroy(this.instance, this.creationalContext);
+      if (this.destroyer != null) {
+        this.destroyer.accept(this.instance, this.creationalContext);
+      }
       this.instance = null;
       this.creationalContext = null;
-      this.contextual = null;      
+      this.destroyer = null;      
       returnValue = true;
     } else {
       returnValue = false;

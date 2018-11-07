@@ -22,12 +22,16 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import java.util.function.Predicate;
 
 import javax.enterprise.context.spi.Contextual;
 
-class CreationalContext<T> implements javax.enterprise.context.spi.CreationalContext<T>, DependentInstanceCollection<T> {
+final class CreationalContext<T> implements javax.enterprise.context.spi.CreationalContext<T>, DependentInstanceCollection<T> {
 
+  private final AtomicBoolean released;
+  
   private final Deque<ContextualInstance<T>> incompleteInstances;
   
   private final Contextual<T> contextual;
@@ -36,23 +40,34 @@ class CreationalContext<T> implements javax.enterprise.context.spi.CreationalCon
 
   CreationalContext(final Contextual<T> contextual) {
     super();
+    this.released = new AtomicBoolean(false);
     this.incompleteInstances = new ArrayDeque<>();
     this.dependentInstances = new ArrayList<>();
     this.contextual = contextual;
   }
 
   @Override
-  public void push(final T incompleteInstance) {
+  public final void push(final T incompleteInstance) {
+    if (this.released.get()) {
+      throw new IllegalStateException();
+    }
     if (incompleteInstance != null) {      
       synchronized (this.incompleteInstances) {
-        this.incompleteInstances.addFirst(new ContextualInstance<>(this.contextual, incompleteInstance, this));
+        // TODO: revisit; are pushed incomplete instances contextual instances or just "normal" instances?
+        this.incompleteInstances.addFirst(new ContextualInstance<>(incompleteInstance, this.contextual::destroy, this, () -> true, false));
       }
     }
   }
 
   @Override
-  public void release() {
-    this.forEachDependentInstance(contextualInstance -> contextualInstance.destroy());
+  public final void release() {
+    if (this.released.getAndSet(true)) {
+      throw new IllegalStateException();
+    }
+    this.removeDependentInstanceIf(contextualInstance -> contextualInstance.destroy());
+    synchronized (this.incompleteInstances) {
+      this.incompleteInstances.clear();
+    }
   }
 
 
@@ -62,22 +77,23 @@ class CreationalContext<T> implements javax.enterprise.context.spi.CreationalCon
   
 
   @Override
-  public void addDependentInstance(final ContextualInstance<? extends T> dependentInstance) {
+  public final void addDependentInstance(final ContextualInstance<? extends T> dependentInstance) {
+    if (this.released.get()) {
+      throw new IllegalStateException();
+    }
     synchronized (this.dependentInstances) {
       this.dependentInstances.add(dependentInstance);
     }
   }
 
   @Override
-  public void forEachDependentInstance(final Predicate<? super ContextualInstance<? extends T>> function) {
+  public final void removeDependentInstanceIf(final Predicate<? super ContextualInstance<? extends T>> function) {
+    if (this.released.get()) {
+      throw new IllegalStateException();
+    }
     if (function != null) {
       synchronized (this.dependentInstances) {
-        final Iterator<? extends ContextualInstance<? extends T>> iterator = this.dependentInstances.iterator();
-        while (iterator.hasNext()) {
-          if (function.test(iterator.next())) {
-            iterator.remove();
-          }
-        }
+        this.dependentInstances.removeIf(function);
       }
     }
   }
