@@ -72,7 +72,7 @@
       <dependency>
         <groupId>org.microbean</groupId>
         <artifactId>microbean-development-annotations</artifactId>
-        <version>0.2.1</version>
+        <version>0.2.2</version>
         <type>jar</type>
       </dependency>
       

@@ -27,8 +27,11 @@ import java.util.function.Supplier;
 
 import javax.enterprise.inject.UnproxyableResolutionException;
 
+import org.microbean.development.annotation.Hack;
+
 import org.microbean.ristretto.type.Types;
 
+@Hack("Just enough proxying to honor the CDI specification.")
 public class JDKProxyFactory<T> implements ClientProxy.Factory<T> {
 
   @Override
@@ -43,11 +46,15 @@ public class JDKProxyFactory<T> implements ClientProxy.Factory<T> {
     } catch (final ReflectiveOperationException reflectiveOperationException) {
       throw new UnproxyableResolutionException(reflectiveOperationException.getMessage(), reflectiveOperationException);
     }
+    // Reserve space for ClientProxy.class.
+    final Class<?>[] classesArray = new Class<?>[beanTypes.size() + 1];
+    Types.toClasses(beanTypes).toArray(classesArray);
+    classesArray[classesArray.length - 1] = ClientProxy.class;
     try {
       @SuppressWarnings("unchecked")
-        final T returnValue =
+      final T returnValue =
         (T)Proxy.newProxyInstance(contextualInstanceSupplier.getClass().getClassLoader(),
-                                  Types.toClasses(beanTypes).toArray(new Class<?>[beanTypes.size()]),
+                                  classesArray,
                                   (proxy, method, args) -> invoke(contextualInstanceSupplier, proxy, method, args));
       return returnValue;
     } catch (IllegalArgumentException badTypes) {
@@ -73,4 +80,3 @@ public class JDKProxyFactory<T> implements ClientProxy.Factory<T> {
   }
   
 }
-

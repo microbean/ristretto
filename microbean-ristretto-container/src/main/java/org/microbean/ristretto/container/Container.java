@@ -14,21 +14,33 @@
  * implied.  See the License for the specific language governing
  * permissions and limitations under the License.
  */
-package org.microbean.ristretto.context;
+package org.microbean.ristretto.container;
 
-import java.util.function.Consumer;
-import java.util.function.Function;
+import java.lang.annotation.Annotation;
 
-import javax.enterprise.context.spi.Contextual;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 
-public interface Storage extends Destroyable {
+import javax.enterprise.context.spi.Context;
+
+class Container {
+
+  private final Map<Class<? extends Annotation>, Context> contexts;
   
-  void forEach(final Consumer<? super Destroyable> consumer);
+  Container() {
+    super();
+    this.contexts = new HashMap<>();
+  }
 
-  <T> T get(final Object key);
+  void addContext(final Context context) {
+    this.contexts.putIfAbsent(context.getScope(), context);
+  }
 
-  <T> DestroyableSupplier<? extends T> computeIfAbsent(final Object key, final Function<? super Object, ? extends DestroyableSupplier<? extends T>> mappingFunction);
+  Context getContext(final Class<? extends Annotation> scope) {
+    return this.contexts.get(scope);
+  }
 
-  <T> DestroyableSupplier<? extends T> remove(final Object key);
-
+  
+  
 }

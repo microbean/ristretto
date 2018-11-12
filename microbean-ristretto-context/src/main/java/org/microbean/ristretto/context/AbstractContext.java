@@ -74,39 +74,50 @@ class AbstractContext implements AlterableContext, Destroyable {
       if (this.storage == null) {        
         returnValue = null;
       } else {
-        final Supplier<T> contextualInstance = storage.get(contextual);
-        if (contextualInstance == null) {
-          returnValue = null;
-        } else {
-          returnValue = contextualInstance.get();
-        }
+        returnValue = this.storage.get(contextual);
       }
     } else if (this.storage == null) {
       returnValue = contextual.create(creationalContext);
     } else {
-      final Supplier<T> contextualInstance =
+      final DestroyableSupplier<? extends T> instance =
         this.storage.computeIfAbsent(contextual,
-                                     c -> new ContextualInstance<T>(c.create(creationalContext), c::destroy, creationalContext, this::isActive, Contexts.isNormalScope(this.getScope())));
-      assert contextualInstance != null;
-      returnValue = contextualInstance.get();
+                                     k -> computeIfAbsent(contextual, creationalContext));
+      assert instance != null;
+      returnValue = instance.get();
     }
     return returnValue;
   }
 
-  @Override
+  private static final <T> DestroyableSupplier<? extends T> computeIfAbsent(final Contextual<T> contextual, final CreationalContext<T> creationalContext) {
+    final T instance = contextual.create(creationalContext);
+    return new DestroyableSupplier<T>() {
+      @Override
+      public final T get() {
+        return instance;
+      }
+      
+      @Override
+      protected final boolean performDestruction() {
+        contextual.destroy(instance, creationalContext);
+        return true;
+      }
+    };
+  }
+
+  @Override // AlterableContext
   public final void destroy(final Contextual<?> contextual) {
     if (!this.isActive()) {
       throw new ContextNotActiveException();
     }
     if (contextual != null && this.storage != null) {
-      final Destroyable contextualInstance = this.storage.remove(contextual);
-      if (contextualInstance != null) {
-        contextualInstance.destroy();
+      final Destroyable instance = this.storage.remove(contextual);
+      if (instance != null) {
+        instance.destroy();
       }
     }
   }
 
-  @Override
+  @Override // Context
   public final boolean isActive() {
     return this.active.get();
   }

@@ -61,8 +61,7 @@ public class TestJDKProxyFactory {
       contexts.createCreationalContext(contextual);
     final ContextualInstance<Comparable<Integer>> i =
       contexts.getContextualInstance(ApplicationScoped.class,
-                                     contextual,
-                                     cc);
+                                     contextual);
     assertSame(fortyTwo, i.get());
     final TypeLiteral<Comparable<Integer>> tl = new TypeLiteral<>() {};
     final ContextualReference<Comparable<Integer>> cr =

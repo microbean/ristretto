@@ -23,7 +23,7 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import javax.enterprise.inject.spi.Bean;
+import java.util.function.Supplier;
 
 public final class TypeSet {
 
@@ -31,15 +31,11 @@ public final class TypeSet {
 
   private final Set<? extends Class<?>> interfaces;
 
-  public TypeSet(final Bean<?> bean) {
-    this(bean == null ? (Set<? extends Type>)null : bean.getTypes());
-  }
-  
   public TypeSet(final Type type) {
     this(Collections.singleton(type));
   }
 
-  private TypeSet(final Set<? extends Type> suppliedTypes) {
+  public TypeSet(final Set<? extends Type> suppliedTypes) {
     super();
     if (suppliedTypes == null || suppliedTypes.isEmpty()) {      
       this.classes = Collections.singleton(Object.class);

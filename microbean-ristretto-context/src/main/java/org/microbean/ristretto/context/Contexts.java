@@ -112,16 +112,21 @@ public final class Contexts implements Destroyable {
   }
   
   public final <T> ContextualInstance<T> getContextualInstance(final Class<? extends Annotation> scope,
-                                                               final Contextual<T> contextual,
-                                                               final CreationalContext<T> creationalContext) {
+                                                               final Contextual<T> contextual) {
+    return this.getContextualInstance(this.getContext(Objects.requireNonNull(scope)),
+                                      Objects.requireNonNull(contextual));
+  }
+
+  public final <T> ContextualInstance<T> getContextualInstance(final Context context,
+                                                               final Contextual<T> contextual) {    
     if (this.isDestroyed()) {
       throw new IllegalStateException();
     }
-    final Context context = this.getContext(scope);
     if (context == null) {
       throw new ContextNotActiveException();
     }
-    return new ContextualInstance<>(context.get(contextual, creationalContext), contextual::destroy, creationalContext, context::isActive, isNormalScope(scope));
+    Objects.requireNonNull(contextual);
+    return new ContextualInstance<>(context, contextual, this.createCreationalContext(contextual));
   }
 
   public static final boolean isNormal(final Context context) {

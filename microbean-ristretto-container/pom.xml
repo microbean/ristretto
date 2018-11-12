@@ -5,7 +5,7 @@
                              http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <artifactId>microbean-ristretto-bean</artifactId>
+  <artifactId>microbean-ristretto-container</artifactId>
 
   <parent>
     <groupId>org.microbean</groupId>
@@ -13,17 +13,11 @@
     <version>0.0.1-SNAPSHOT</version>
   </parent>
 
-  <name>microBean Ristretto: Bean</name>
+  <name>microBean Ristretto: Container</name>
   <description>${project.name}</description>
 
   <dependencyManagement>
     <dependencies>
-      <dependency>
-        <groupId>${project.groupId}</groupId>
-        <artifactId>microbean-ristretto-context</artifactId>
-        <type>jar</type>
-        <version>${project.version}</version>
-      </dependency>
       <dependency>
         <groupId>${project.groupId}</groupId>
         <artifactId>microbean-ristretto-javax-enterprise-inject-spi</artifactId>
@@ -36,19 +30,9 @@
   <dependencies>
     <dependency>
       <groupId>${project.groupId}</groupId>
-      <artifactId>microbean-ristretto-context</artifactId>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>${project.groupId}</groupId>
       <artifactId>microbean-ristretto-javax-enterprise-inject-spi</artifactId>
       <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.microbean</groupId>
-      <artifactId>microbean-development-annotations</artifactId>
-      <scope>compile</scope>
-    </dependency>
+      </dependency>
   </dependencies>
   
 </project>

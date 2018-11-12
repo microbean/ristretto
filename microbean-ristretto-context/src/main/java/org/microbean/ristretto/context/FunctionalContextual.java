@@ -14,7 +14,7 @@
  * implied.  See the License for the specific language governing
  * permissions and limitations under the License.
  */
-package org.microbean.ristretto.bean;
+package org.microbean.ristretto.context;
 
 import java.util.Objects;
 
@@ -29,21 +29,39 @@ class FunctionalContextual<T> implements Contextual<T> {
   private final Function<CreationalContext<T>, T> creator;
 
   private final BiConsumer<T, CreationalContext<T>> destroyer;
+
+  FunctionalContextual(final Function<CreationalContext<T>, T> creator) {
+    this(creator, null);
+  }
+
+  FunctionalContextual(final BiConsumer<T, CreationalContext<T>> destroyer) {
+    this(null, destroyer);
+  }
   
   FunctionalContextual(final Function<CreationalContext<T>, T> creator,
                        final BiConsumer<T, CreationalContext<T>> destroyer) {
-    this.creator = Objects.requireNonNull(creator);
-    this.destroyer = Objects.requireNonNull(destroyer);
+    super();
+    this.creator = creator;
+    this.destroyer = destroyer;
   }
 
   @Override
   public T create(final CreationalContext<T> creationalContext) {
-    return this.creator.apply(creationalContext);
+    if (this.creator == null) {
+      throw new IllegalStateException();
+    } else {
+      return this.creator.apply(creationalContext);
+    }
   }
 
   @Override
   public void destroy(final T instance, final CreationalContext<T> creationalContext) {
-    this.destroyer.accept(instance, creationalContext);
+    if (this.destroyer == null) {
+      creationalContext.release();
+    } else {
+      // The destroyer function is obligated to call release()
+      this.destroyer.accept(instance, creationalContext);
+    }
   }
   
 }

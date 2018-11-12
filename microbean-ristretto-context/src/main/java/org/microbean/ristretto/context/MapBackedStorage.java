@@ -21,6 +21,8 @@ import java.util.Objects;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import java.util.function.Supplier;
+
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -30,15 +32,15 @@ public final class MapBackedStorage implements Storage {
 
   private final AtomicBoolean destroyed;
   
-  private final Map<Contextual<?>, ContextualInstance<?>> map;
+  private final Map<Object, DestroyableSupplier<?>> map;
   
-  public MapBackedStorage(final Map<Contextual<?>, ContextualInstance<?>> map) {
+  public MapBackedStorage(final Map<Object, DestroyableSupplier<?>> map) {
     super();
     this.destroyed = new AtomicBoolean();
     this.map = Objects.requireNonNull(map);
   }
 
-  @Override
+  @Override // Destroyable
   public final boolean destroy() {
     if (this.destroyed.getAndSet(true)) {
       throw new IllegalStateException();
@@ -48,44 +50,54 @@ public final class MapBackedStorage implements Storage {
     return true;
   }
 
-  @Override
+  @Override // Destroyable
   public final boolean isDestroyed() {
     return this.destroyed.get();
   }
 
-  @Override
-  public final void forEach(final Consumer<? super ContextualInstance<?>> consumer) {
+  @Override // Storage
+  public final void forEach(final Consumer<? super Destroyable> consumer) {
     if (this.isDestroyed()) {
       throw new IllegalStateException();
     }
     this.map.forEach((k, v) -> consumer.accept(v));
   }
 
-  @Override
-  @SuppressWarnings("unchecked")
-  public final <T> ContextualInstance<T> get(final Contextual<T> key) {
+  @Override // Storage
+  public final <T> T get(final Object key) {
     if (this.isDestroyed()) {
       throw new IllegalStateException();
     }
-    return (ContextualInstance<T>)this.map.get(key);
+    final T returnValue;
+    final Supplier<?> supplier = this.map.get(key);
+    if (supplier == null) {
+      returnValue = null;
+    } else {
+      @SuppressWarnings("unchecked")
+      final T temp = (T)supplier.get();
+      returnValue = temp;
+    }
+    return returnValue;
   }
 
-  @Override
-  @SuppressWarnings("unchecked")
-  public final <T> ContextualInstance<T> computeIfAbsent(final Contextual<T> key, final Function<? super Contextual<T>, ? extends ContextualInstance<T>> mappingFunction) {
+  @Override // Storage
+  public final <T> DestroyableSupplier<? extends T> computeIfAbsent(final Object key, final Function<? super Object, ? extends DestroyableSupplier<? extends T>> mappingFunction) {
     if (this.isDestroyed()) {
       throw new IllegalStateException();
     }
-    return (ContextualInstance<T>)this.map.computeIfAbsent(key, (Function<? super Contextual<?>, ? extends ContextualInstance<?>>)mappingFunction);
+    @SuppressWarnings("unchecked")
+    final DestroyableSupplier<? extends T> returnValue = (DestroyableSupplier<? extends T>)this.map.computeIfAbsent(key, mappingFunction);
+    return returnValue;
   }
 
-  @Override
-  @SuppressWarnings("unchecked")
-  public final <T> ContextualInstance<T> remove(final Contextual<T> key) {
+  @Override // Storage
+  public final <T> DestroyableSupplier<? extends T> remove(final Object key) {
     if (this.isDestroyed()) {
       throw new IllegalStateException();
     }
-    return (ContextualInstance<T>)this.map.remove(key);
+    @SuppressWarnings("unchecked")
+    final DestroyableSupplier<? extends T> returnValue = (DestroyableSupplier<? extends T>)this.map.remove(key);
+    return returnValue;
   }
   
 }

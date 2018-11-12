@@ -20,72 +20,56 @@ import java.util.Objects;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import java.util.function.BiConsumer;
-import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
 import javax.enterprise.context.ContextNotActiveException;
 
+import javax.enterprise.context.spi.AlterableContext;
+import javax.enterprise.context.spi.Context;
 import javax.enterprise.context.spi.Contextual;
 import javax.enterprise.context.spi.CreationalContext;
 
 public final class ContextualInstance<T> implements Destroyable, Supplier<T> {
 
   private final AtomicBoolean destroyed;
+
+  private Context context;
   
-  private BiConsumer<T, CreationalContext<T>> destroyer;
-
-  private T instance;
-
-  private final BooleanSupplier activeSupplier;
+  private Contextual<T> contextual;
   
   private CreationalContext<T> creationalContext;
 
   private final boolean normal;
 
-  ContextualInstance(final T instance,
-                     final boolean normal) {
-    this(instance, null, null, () -> true, normal);
-  }
-  
-  ContextualInstance(final T instance,
-                     final boolean active,
-                     final boolean normal) {
-    this(instance, null, null, () -> active, normal);
-  }
-  
-  ContextualInstance(final T instance,
-                     final BooleanSupplier activeSupplier,
-                     final boolean normal) {
-    this(instance, null, null, activeSupplier, normal);
-  }
-  
-  ContextualInstance(final T instance,
-                     final BiConsumer<T, CreationalContext<T>> destroyer,
-                     final CreationalContext<T> creationalContext,
-                     final BooleanSupplier activeSupplier,
-                     final boolean normal) {
+  ContextualInstance(final Context context,
+                     final Contextual<T> contextual,
+                     final CreationalContext<T> creationalContext) {
     super();
     this.destroyed = new AtomicBoolean();
-    this.instance = instance;
-    this.destroyer = destroyer;
-    this.creationalContext = Objects.requireNonNull(creationalContext);
-    this.activeSupplier = activeSupplier == null ? () -> true : activeSupplier;
-    this.normal = normal;
+    this.context = Objects.requireNonNull(context);
+    this.contextual = Objects.requireNonNull(contextual);
+    this.creationalContext = creationalContext;
+    this.normal = Contexts.isNormal(context);
   }
 
   @Override
   public final T get() {
+    final T returnValue;
     if (this.isDestroyed()) {
       throw new IllegalStateException();
     } else if (!this.isActive()) {
       throw new ContextNotActiveException();
+    } else {
+      returnValue = this.context.get(this.contextual, this.creationalContext);
     }
-    return this.instance;
+    return returnValue;
   }
-
+  
   public final boolean isActive() {
-    return !this.isDestroyed() && this.activeSupplier.getAsBoolean();
+    if (this.isDestroyed()) {
+      throw new IllegalStateException();
+    }
+    return this.context.isActive();
   }
   
   @Override
@@ -104,17 +88,36 @@ public final class ContextualInstance<T> implements Destroyable, Supplier<T> {
   public final boolean destroy() {
     final boolean returnValue;
     if (this.destroyed.compareAndSet(false, true)) {
-      if (this.destroyer != null) {
-        this.destroyer.accept(this.instance, this.creationalContext);
+      if (this.context instanceof AlterableContext) {
+        ((AlterableContext)this.context).destroy(this.contextual);
+      } else {
+        final T instance = this.context.get(this.contextual, null);
+        if (instance != null) {
+          this.contextual.destroy(instance,
+                                  new CreationalContext<>() {
+                                    @Override
+                                    public final void push(final T incompleteInstance) {
+                                      throw new IllegalStateException();
+                                    }
+                                    
+                                    @Override
+                                    public final void release() {
+                                      final CreationalContext<T> cc = ContextualInstance.this.creationalContext;
+                                      if (cc != null) {
+                                        cc.release();
+                                      }
+                                    }
+                                  });
+        }
       }
-      this.instance = null;
+      this.context = null;
+      this.contextual = null;
       this.creationalContext = null;
-      this.destroyer = null;      
       returnValue = true;
     } else {
       returnValue = false;
     }
     return returnValue;
   }
-  
+
 }

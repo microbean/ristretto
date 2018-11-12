@@ -16,19 +16,31 @@
  */
 package org.microbean.ristretto.context;
 
-import java.util.function.Consumer;
-import java.util.function.Function;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-import javax.enterprise.context.spi.Contextual;
+import java.util.function.Supplier;
 
-public interface Storage extends Destroyable {
-  
-  void forEach(final Consumer<? super Destroyable> consumer);
+public abstract class DestroyableSupplier<T> implements Destroyable, Supplier<T> {
 
-  <T> T get(final Object key);
+  private final AtomicBoolean destroyed;
 
-  <T> DestroyableSupplier<? extends T> computeIfAbsent(final Object key, final Function<? super Object, ? extends DestroyableSupplier<? extends T>> mappingFunction);
+  protected DestroyableSupplier() {
+    this.destroyed = new AtomicBoolean();
+  }
 
-  <T> DestroyableSupplier<? extends T> remove(final Object key);
+  @Override
+  public final boolean isDestroyed() {
+    return this.destroyed.get();
+  }
+      
+  @Override
+  public final boolean destroy() {
+    if (this.destroyed.getAndSet(true)) {
+      throw new IllegalStateException();
+    }
+    return this.performDestruction();
+  }
+
+  protected abstract boolean performDestruction();
 
 }

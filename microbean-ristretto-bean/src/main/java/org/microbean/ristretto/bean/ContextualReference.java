@@ -95,6 +95,8 @@ public class ContextualReference<T> implements Supplier<T> {
   }
 
   private final T proxy(final Supplier<T> contextualInstance) {
+    // TODO: with 500 ContextualReferences of the same kind, we'll
+    // have 500 proxy instances all doing the same thing.
     return this.proxy.updateAndGet(t -> t == null ? this.proxyCreator.apply(contextualInstance, this.beanTypes) : t);
   }
   

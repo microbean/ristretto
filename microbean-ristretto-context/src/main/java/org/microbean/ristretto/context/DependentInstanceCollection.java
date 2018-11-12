@@ -18,14 +18,31 @@ package org.microbean.ristretto.context;
 
 import java.util.Collection;
 
+import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 import javax.enterprise.context.spi.CreationalContext;
 
-interface DependentInstanceCollection<T> {
+public interface DependentInstanceCollection<T> {
 
-  void addDependentInstance(final ContextualInstance<? extends T> dependentInstance);
+  /**
+   * Adds an instance as a dependency of this {@link
+   * DependentInstanceCollection} implementation together with an
+   * optional means of destroying it later.
+   *
+   * @param dependentInstance the instance to add; must not be {@code
+   * null}
+   *
+   * @param destroyer a {@link Consumer} whose {@link
+   * Consumer#accept(Object)} method will destroy the instance when
+   * necessary
+   */
+  void addDependentInstance(final T dependentInstance, final Consumer<? super T> destroyer);
 
-  void removeDependentInstanceIf(final Predicate<? super ContextualInstance<? extends T>> predicate);
+  /**
+   * 
+   */
+  void removeDependentInstances(final Predicate<? super Destroyable> predicate);
   
 }

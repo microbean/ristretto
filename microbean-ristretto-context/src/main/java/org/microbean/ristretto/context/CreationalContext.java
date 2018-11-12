@@ -24,6 +24,7 @@ import java.util.Iterator;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import javax.enterprise.context.spi.Contextual;
@@ -32,11 +33,11 @@ final class CreationalContext<T> implements javax.enterprise.context.spi.Creatio
 
   private final AtomicBoolean released;
   
-  private final Deque<ContextualInstance<T>> incompleteInstances;
+  private final Deque<T> incompleteInstances;
   
   private final Contextual<T> contextual;
 
-  private final Collection<ContextualInstance<? extends T>> dependentInstances;
+  private final Collection<DestroyableSupplier<?>> dependentInstances;
 
   CreationalContext(final Contextual<T> contextual) {
     super();
@@ -53,8 +54,7 @@ final class CreationalContext<T> implements javax.enterprise.context.spi.Creatio
     }
     if (incompleteInstance != null) {      
       synchronized (this.incompleteInstances) {
-        // TODO: revisit; are pushed incomplete instances contextual instances or just "normal" instances?
-        this.incompleteInstances.addFirst(new ContextualInstance<>(incompleteInstance, this.contextual::destroy, this, () -> true, false));
+        this.incompleteInstances.addFirst(incompleteInstance);
       }
     }
   }
@@ -64,7 +64,7 @@ final class CreationalContext<T> implements javax.enterprise.context.spi.Creatio
     if (this.released.getAndSet(true)) {
       throw new IllegalStateException();
     }
-    this.removeDependentInstanceIf(contextualInstance -> contextualInstance.destroy());
+    this.removeDependentInstances(contextualInstance -> contextualInstance.destroy());
     synchronized (this.incompleteInstances) {
       this.incompleteInstances.clear();
     }
@@ -77,23 +77,38 @@ final class CreationalContext<T> implements javax.enterprise.context.spi.Creatio
   
 
   @Override
-  public final void addDependentInstance(final ContextualInstance<? extends T> dependentInstance) {
+  public final void addDependentInstance(final T dependentInstance, final Consumer<? super T> destroyer) {
     if (this.released.get()) {
       throw new IllegalStateException();
     }
     synchronized (this.dependentInstances) {
-      this.dependentInstances.add(dependentInstance);
+      final DestroyableSupplier<T> destroyableSupplier = new DestroyableSupplier<>() {
+          @Override
+          public final T get() {
+            return dependentInstance;
+          }
+
+          @Override
+          protected boolean performDestruction() {
+            if (destroyer != null) {
+              destroyer.accept(dependentInstance);
+              return true;
+            }
+            return false;
+          }
+        };
+      this.dependentInstances.add(destroyableSupplier);
     }
   }
 
   @Override
-  public final void removeDependentInstanceIf(final Predicate<? super ContextualInstance<? extends T>> function) {
+  public final void removeDependentInstances(final Predicate<? super Destroyable> predicate) {
     if (this.released.get()) {
       throw new IllegalStateException();
     }
-    if (function != null) {
+    if (predicate != null) {
       synchronized (this.dependentInstances) {
-        this.dependentInstances.removeIf(function);
+        this.dependentInstances.removeIf(predicate);
       }
     }
   }

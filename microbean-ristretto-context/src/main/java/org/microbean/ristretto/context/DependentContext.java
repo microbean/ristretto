@@ -35,7 +35,7 @@ final class DependentContext extends AbstractContext {
     if (returnValue != null && creationalContext instanceof DependentInstanceCollection) {
       @SuppressWarnings("unchecked")
       final DependentInstanceCollection<T> dependentInstanceCollection = (DependentInstanceCollection<T>)creationalContext;
-      dependentInstanceCollection.addDependentInstance(new ContextualInstance<>(returnValue, contextual::destroy, creationalContext, this::isActive, Contexts.isNormalScope(this.getScope())));
+      dependentInstanceCollection.addDependentInstance(returnValue, t -> contextual.destroy(t, creationalContext));
     }
     return returnValue;
   }
